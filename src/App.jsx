@@ -1,24 +1,61 @@
-import Card from './components/Card/Card';
-import Profile from './components/Profile/Profile';
-import FriendList from './components/FriendList/FriendList';
-import TransactionHistory from './components/TransactionHistory/TransactionHistory';
-
-import userData from './userData.json';
-import friends from './friends.json';
-import transactions from './transactions.json';
+import { useEffect, useState } from "react";
+import Description from "./components/Description/Description";
+import Feedback from "./components/Feedback/Feedback";
+import Options from "./components/Options/Options";
+import Notification from "./components/Notification/Notification";
 
 function App() {
+  const [feedback, setFeedback] = useState(() => {
+    const persistedFeedback = JSON.parse(localStorage.getItem("feedback"));
+    return (
+      persistedFeedback || {
+        good: 0,
+        neutral: 0,
+        bad: 0,
+      }
+    );
+  });
+
+  useEffect(() => {
+    localStorage.setItem("feedback", JSON.stringify(feedback));
+  }, [feedback]);
+
+  const updateFeedback = (feedbackType) => {
+    setFeedback({
+      ...feedback,
+      [feedbackType]: feedback[feedbackType] + 1,
+    });
+  };
+
+  const totalFeedback = feedback.good + feedback.neutral + feedback.bad;
+
+  const resetFeedback = () => {
+    setFeedback({
+      good: 0,
+      neutral: 0,
+      bad: 0,
+    });
+  };
+
+  const positiveFeedback = Math.round((feedback.good / totalFeedback) * 100);
+
   return (
     <>
-      <Profile
-        name={userData.username}
-        tag={userData.tag}
-        location={userData.location}
-        image={userData.avatar}
-        stats={userData.stats}
+      <Description />
+      <Options
+        updateFeedback={updateFeedback}
+        total={totalFeedback}
+        resetFeedback={resetFeedback}
       />
-      <FriendList friends={friends} key={friends.id} />
-      <TransactionHistory items={transactions} />
+      {totalFeedback ? (
+        <Feedback
+          feedback={feedback}
+          total={totalFeedback}
+          positiveFeedback={positiveFeedback}
+        />
+      ) : (
+        <Notification />
+      )}
     </>
   );
 }
